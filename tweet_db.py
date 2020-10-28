@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 class TweetDb:
-    def __init__(self, db_file="tavatirTweets_v2.db"):
+    def __init__(self, db_file="tavatirTweets_v2.db", should_create_tables=False):
         def create_tables():
             sql1 = """
             CREATE TABLE IF NOT EXISTS tweet ( 
@@ -22,7 +22,6 @@ class TweetDb:
             try:
                 self.cursor.execute(sql1)
                 self.conn.commit()
-                print("tweet TABLE created.")
 
             except Error as e:
                 self.conn.rollback()
@@ -30,8 +29,9 @@ class TweetDb:
 
         self.conn = sqlite3.connect(db_file)
         self.cursor = self.conn.cursor()
-        self.size = 0
-        # create_tables()
+        if should_create_tables:
+            create_tables()
+            print("tweet table created.\n")
 
     def insert(self, data):
         data = json.loads(data)
@@ -48,11 +48,6 @@ class TweetDb:
             self.cursor.execute(sql, (content, content_id, matching_rules_ids_str, time))
 
             self.conn.commit()
-            self.size += 1
-            curr_idx = int(self.size / 100)
-
-            if self.size == curr_idx * 100:
-                print(self.size)
 
         else:
             print(f"content not found in data: {data}")

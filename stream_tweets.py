@@ -2,10 +2,6 @@ import requests
 import os
 import json
 import tweet_db
-import time
-
-# To set your enviornment variables in your terminal run the following line:
-# export 'BEARER_TOKEN'='<your_bearer_token>'
 
 
 def create_headers(bearer_token):
@@ -96,7 +92,7 @@ def main():
     rules = get_rules(headers, bearer_token)
     delete = delete_all_rules(headers, bearer_token, rules)
     set = set_rules(headers, delete, bearer_token)
-    tweetDb = tweet_db.TweetDb("tavatirTweets_v2.db")
+    tweetDb = tweet_db.TweetDb(db_file="tavatirTweets_v3.db", should_create_tables=True)
     get_stream(headers, set, bearer_token, tweetDb)
 
 
