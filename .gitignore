@@ -1,0 +1,9 @@
+.idea/
+tavatirEnv/
+.ipynb_checkpoints/
+__pycache__/
+data/
+models/
+*.ipynb
+*.db
+*.sql
