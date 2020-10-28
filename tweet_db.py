@@ -4,11 +4,10 @@ import time
 import sqlite3
 from sqlite3 import Error
 from datetime import datetime
-from pdb import set_trace
 
 
 class TweetDb:
-    def __init__(self, db_file="tavatirTweets.db"):
+    def __init__(self, db_file="tavatirTweets_v2.db"):
         def create_tables():
             sql1 = """
             CREATE TABLE IF NOT EXISTS tweet ( 
@@ -32,7 +31,7 @@ class TweetDb:
         self.conn = sqlite3.connect(db_file)
         self.cursor = self.conn.cursor()
         self.size = 0
-        create_tables()
+        # create_tables()
 
     def insert(self, data):
         data = json.loads(data)
@@ -62,13 +61,16 @@ class TweetDb:
         sql = "SELECT * FROM tweet"
 
         if not path:
-            path = f"data/tweets_{str(time.time())}.csv"
+            path = f"data/tweets_{str(int(time.time()))}.csv"
 
-        with open(path, "wb") as write_file:
+        with open(path, "w") as write_file:
+            rows = self.cursor.execute(sql).fetchall()
+            csv_out = csv.writer(write_file)
+            csv_out.writerow(['id', 'matching_rules_ids', 'content', 'content_id', 'received_at'])
+            for row in rows:
+                new_row = tuple([str(v) if idx == 0 else v for idx, v in enumerate(row)])
+                csv_out.writerow(new_row)
 
-            for row in self.cursor.execute(sql):
-                writeRow = " ".join(row)
-                write_file.write(writeRow.encode())
 
         return f"Saved CSV to {path}"
 
