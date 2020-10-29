@@ -1,10 +1,13 @@
 import pickle
 import string
 import re
-import demoji
 import operator
+import demoji
 import numpy as np
 import pandas as pd
+import split_hashtags
+import time
+
 
 def get_text_vocab_coverage(df):
     glove_embeddings = np.load('models/glove.840B.300d.pkl', allow_pickle=True)
@@ -101,9 +104,18 @@ def expand_vocab_coverage(df):
     def findall_hashtags(text):
         return re.findall(r"\W(\#[a-zA-Z]+[0-9]*\b)(?!;)", text)
 
-    # def clean_hashtags_mentions(text):
-    #     pass
-
+    def substitute_hashtags(text):
+        hashtags = re.findall(r"\W(\#[a-zA-Z]+[0-9]*\b)(?!;)", text)
+        for ht in hashtags:
+            ht_ = ht[1:]
+            new_ht = split_hashtags.split_hashtag_to_words_all_possibilities(ht_)
+            if len(new_ht) > 0:
+                new_ht = new_ht[0]
+                clean_ht = ' '.join(new_ht)
+            else:
+                clean_ht = ht_
+            text = re.sub(ht, clean_ht, text)
+        return text
 
     df['cleaner_tweet'] = df['content'].apply(remove_urls)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(contraction_expander)
@@ -111,24 +123,31 @@ def expand_vocab_coverage(df):
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(replace_emojis)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(removeall_mentions)
     df['hashtags'] = df['cleaner_tweet'].apply(findall_hashtags)
-    df['cleaner_tweet'] = df['cleaner_tweet'].apply(removeall_hashtags)
+    print("created hashtags column and now substitute hashtags\n")
+    start = time.time()
+    df['cleaner_tweet'] = df['cleaner_tweet'].apply(substitute_hashtags)
+    end = time.time()
+    print(f"finished substituting: {str(end-start)} seconds\n")
+    # df['cleaner_tweet'] = df['cleaner_tweet'].apply(removeall_hashtags)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(removeall_punctuations)
 
-    # df['cleaner_tweet'] = df['cleaner_tweet'].apply(clean_hashtags_mentions)
 
     glove_oov, glove_vocab_coverage, glove_text_coverage = get_text_vocab_coverage(df)
 
-    print(f"glove vocab coverage without mentions and hashtags: {glove_vocab_coverage}")
-    print(f"glove text coverage without mentions and hashtags: {glove_text_coverage}")
+    print(f"glove vocab coverage without mentions: {glove_vocab_coverage}")
+    print(f"glove text coverage without mentions: {glove_text_coverage}")
 
-    with open("data/glove_oov_v2.pkl", "wb") as file:
+    with open("data/glove_oov_v3.pkl", "wb") as file:
         pickle.dump(glove_oov, file)
 
     return df
 
 
 if __name__ == "__main__":
+    start = time.time()
     df = pd.read_csv("data/tweets_1603925121.csv")
     df.drop(columns=["content_id", "matching_rules_ids", "received_at"], inplace=True)
     df = expand_vocab_coverage(df)
-    df.to_csv("data/clean_tweets_v2.csv", index=False)
+    df.to_csv("data/clean_tweets_v3.csv", index=False)
+    end = time.time()
+    print(f'Time to preprocess: {str(start-end)} seconds\n')
