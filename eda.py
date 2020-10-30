@@ -33,7 +33,7 @@ def string_to_vector(df):
     tfidf_vectorizer = TfidfVectorizer(ngram_range=(1,1), analyzer='word')
     tfidf_fit = tfidf_vectorizer.fit(df['cleaner_tweet'])
     matrix = tfidf_fit.transform(df['cleaner_tweet'])
-    sparse_matrix = sparse.csc_matrix(matrix)
+    sparse_matrix = sparse.csr_matrix(matrix)
     vocab = tfidf_vectorizer.vocabulary_
 
     return tfidf_fit, sparse_matrix, vocab
