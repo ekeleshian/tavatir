@@ -1,6 +1,7 @@
-from nltk.corpus import words
+# from nltk.corpus import words
 
-word_dictionary = list(set(words.words()))
+# word_dictionary = list(set(words.words()))
+word_dictionary = []
 word_dictionary.append("Barda")
 word_dictionary.append("Armenian")
 word_dictionary.append("Armenia")
@@ -17,10 +18,11 @@ word_dictionary.extend(["For", "War", "Crimes", "armenian", "stop", "terrorism",
 						"aggression", "Ganja", "barda", "Pray", "US", "UK", "Kills", "Unicef", "baby", "Pashinyan", "Tartar", "Armen",
 						"city", "Khojaly", "Attacking", "Kills", "killer", "Lies", "Vandalism", "CRIMES", "WAR", "karabakh", "Aliyev", "Artsakh",
 						"Nagorno", 'aggressor', "occupiers", "open", "eyes", "world", "Gandja", "France", "Shame", "On", "You", "Today",
-						"Human", "Rights", "Fascism"])
+						"Human", "Rights", "Fascism", "Is", "let", "children", "die", 'not', 'is', 'france', "Terrorisim",
+						"United", "Nations", 'UNICEF', 'unicef', "Nikol", "Attacks", "Civilians", "for"])
 
-for alphabet in "bcdefghjklmnopqrstuvwxyz" + "bcdefghjklmnopqrstuvwxyz".upper():
-	word_dictionary.remove(alphabet)
+# for alphabet in "bcdefghjklmnopqrstuvwxyz" + "bcdefghjklmnopqrstuvwxyz".upper():
+# 	word_dictionary.remove(alphabet)
 
 def split_hashtag_to_words_all_possibilities(hashtag):
 	all_possibilities = []
