@@ -7,7 +7,13 @@ import numpy as np
 import pandas as pd
 import split_hashtags
 import time
+from nltk.corpus import stopwords
+import tweet_db
+from pdb import set_trace
+from collections import defaultdict
 
+# with open('data/ht_dict.pkl', 'rb') as file:
+#     ht_dict = pickle.load(file)
 
 def get_text_vocab_coverage(df):
     glove_embeddings = np.load('models/glove.840B.300d.pkl', allow_pickle=True)
@@ -117,6 +123,41 @@ def expand_vocab_coverage(df):
             text = re.sub(ht, clean_ht, text)
         return text
 
+    def substitute_hashtags_v2(row):
+        hashtags = row.hashtags
+        for ht in hashtags:
+            row.cleaner_tweet = re.sub(ht, ht_dict[ht], row.cleaner_tweet)
+        return row
+
+    def build_hashtag_dict(df):
+        all_hts = []
+
+        def concat_hashtags(hts):
+            all_hts.extend(hts)
+
+        df['hashtags'].apply(concat_hashtags)
+        all_unique_hts = list(set(all_hts))
+        ht_dict = dict()
+        print("building dictionary...\n")
+        for ht in all_unique_hts:
+            ht_ = ht[1:]
+            new_ht = split_hashtags.split_hashtag_to_words_all_possibilities(ht_)
+            if len(new_ht) > 0:
+                new_ht = new_ht[0]
+                clean_ht = ' '.join(new_ht)
+            else:
+                clean_ht = ht_
+
+            ht_dict[ht] = clean_ht
+        print("saving as pkl file...\n")
+        with open('data/ht_dict_v5.pkl', 'wb') as file:
+            pickle.dump(ht_dict, file)
+
+    def remove_stopwords(text):
+        clean_text = text.split(" ")
+        clean_text = [word for word in clean_text if word not in stopwords.words('english') and word != "RT"]
+        return ' '.join(clean_text)
+
     df['cleaner_tweet'] = df['content'].apply(remove_urls)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(contraction_expander)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(char_entity_references)
@@ -125,19 +166,25 @@ def expand_vocab_coverage(df):
     df['hashtags'] = df['cleaner_tweet'].apply(findall_hashtags)
     print("created hashtags column and now substitute hashtags\n")
     start = time.time()
-    df['cleaner_tweet'] = df['cleaner_tweet'].apply(substitute_hashtags)
+    # df['cleaner_tweet'] = df['cleaner_tweet'].apply(substitute_hashtags)
+    build_hashtag_dict(df)
+
+    with open('data/ht_dict_v5.pkl', 'rb') as file:
+        ht_dict = pickle.load(file)
+
+    df = df.apply(substitute_hashtags_v2, axis=1)
     end = time.time()
     print(f"finished substituting: {str(end-start)} seconds\n")
     # df['cleaner_tweet'] = df['cleaner_tweet'].apply(removeall_hashtags)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(removeall_punctuations)
-
+    df['cleaner_tweet'] = df['cleaner_tweet'].apply(remove_stopwords)
 
     glove_oov, glove_vocab_coverage, glove_text_coverage = get_text_vocab_coverage(df)
 
     print(f"glove vocab coverage without mentions: {glove_vocab_coverage}")
     print(f"glove text coverage without mentions: {glove_text_coverage}")
 
-    with open("data/glove_oov_v3.pkl", "wb") as file:
+    with open("data/glove_oov_v5.pkl", "wb") as file:
         pickle.dump(glove_oov, file)
 
     return df
@@ -145,9 +192,12 @@ def expand_vocab_coverage(df):
 
 if __name__ == "__main__":
     start = time.time()
-    df = pd.read_csv("data/tweets_1603925121.csv")
+    df = pd.DataFrame()
+    for i in range(2, 5):
+        df = df.append(pd.read_csv(f"data/tavatirTweetsRaw_v{i}.csv"))
+    print(f'length of total df: {len(df)}')
     df.drop(columns=["content_id", "matching_rules_ids", "received_at"], inplace=True)
     df = expand_vocab_coverage(df)
-    df.to_csv("data/clean_tweets_v3.csv", index=False)
+    df.to_csv(f"data/tavatirTweetsProcessed_{len(df)}.csv", index=False)
     end = time.time()
-    print(f'Time to preprocess: {str(start-end)} seconds\n')
+    print(f'Time to preprocess: {str(end-start)} seconds\n')
