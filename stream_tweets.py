@@ -45,7 +45,7 @@ def delete_all_rules(headers, bearer_token, rules):
 def set_rules(headers, delete, bearer_token):
     # You can adjust the rules if needed
     sample_rules = [
-        {"value": "(#StopArmenianAggression OR #StopArmenianTerrorism OR #ArmeniaKillsChildren OR #StopArmenianTerror OR @nahidbabayev_ OR @fridah0291 OR @Gunel883 OR @CanAzerbaycan14 OR @Lami80804081 OR @Klepsik OR @jewish66 OR @Elsana__M OR @DrRomeoo OR @Suleyman00717 OR @narminyya OR @1992Aslanl OR @IlkinAkhundlu00 OR @Nika37035074 OR @HashimliSam OR @jaliya__ OR @sadaqatmamadova OR @mihirzali OR @Ulviyya99 OR @wwwmodgovaz OR @presidentaz OR @cavidaga) lang:en -is:retweet"},
+        {"value": "(#StopArmenianAggression OR #StopArmenianTerrorism OR #ArmeniaKillsChildren OR #StopArmenianTerror OR @nahidbabayev_ OR @fridah0291 OR @Gunel883 OR @CanAzerbaycan14 OR @Lami80804081 OR @Klepsik OR @jewish66 OR @Elsana__M OR @DrRomeoo OR @Suleyman00717 OR @narminyya OR @1992Aslanl OR @IlkinAkhundlu00 OR @Nika37035074 OR @HashimliSam OR @jaliya__ OR @sadaqatmamadova OR @mihirzali OR @Ulviyya99 OR @wwwmodgovaz OR @presidentaz OR @cavidaga) lang:en"},
     ]
     payload = {"add": sample_rules}
     response = requests.post(
@@ -63,7 +63,7 @@ def set_rules(headers, delete, bearer_token):
 def get_stream(headers, set, bearer_token, tweetDb):
     try:
         response = requests.get(
-            "https://api.twitter.com/2/tweets/search/stream?tweet.fields=source,possibly_sensitive&expansions=author_id,geo.place_id", headers=headers, stream=True,
+            "https://api.twitter.com/2/tweets/search/stream?tweet.fields=source,possibly_sensitive,entities&expansions=author_id,geo.place_id", headers=headers, stream=True,
         )
         print(response.status_code)
 
