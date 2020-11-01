@@ -19,7 +19,8 @@ class TweetDb:
                 username text,
                 possibly_sensitive BOOLEAN,
                 place_name text,
-                place_id text
+                place_id text,
+                urls text
             );
             """
 
@@ -54,14 +55,20 @@ class TweetDb:
                 if field == "places":
                     place_name = data['includes'][field][0]['full_name']
                     place_id = data['includes'][field][0]['id']
+
+            urls = []
+            if data['data'].get("urls"):
+                for url in data['data']['entities']['urls']:
+                    urls.append(url['expanded_url'])
+            urls_str = json.dumps(urls)
             matching_rules_ids = []
             for mr in data['matching_rules']:
                 matching_rules_ids.append(mr['id'])
             matching_rules_ids_str = json.dumps(matching_rules_ids)
             time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-            sql = "INSERT INTO tweet (content, content_id, matching_rules_ids, received_at, user_id, username, place_name, place_id, possibly_sensitive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            sql = "INSERT INTO tweet (content, content_id, matching_rules_ids, received_at, user_id, username, place_name, place_id, possibly_sensitive, urls) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
-            self.cursor.execute(sql, (content, content_id, matching_rules_ids_str, time, user_id, username, place_name, place_id, possibly_sensitive))
+            self.cursor.execute(sql, (content, content_id, matching_rules_ids_str, time, user_id, username, place_name, place_id, possibly_sensitive, urls_str))
 
             self.conn.commit()
 
@@ -78,7 +85,7 @@ class TweetDb:
             rows = self.cursor.execute(sql).fetchall()
             csv_out = csv.writer(write_file)
             csv_out.writerow(['id', 'matching_rules_ids', 'content', 'content_id', 'received_at', "user_id", "username",
-                              "possibly_sensitive", "place_name", "place_id"])
+                              "possibly_sensitive", "place_name", "place_id", "urls"])
             for row in rows:
                 new_row = tuple([str(v) if idx == 0 else v for idx, v in enumerate(row)])
                 csv_out.writerow(new_row)
