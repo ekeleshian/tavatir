@@ -8,12 +8,16 @@ import pandas as pd
 import split_hashtags
 import time
 from nltk.corpus import stopwords
+from nltk.tokenize.treebank import TreebankWordTokenizer
+
 import tweet_db
 from pdb import set_trace
 from collections import defaultdict
 
 # with open('data/ht_dict.pkl', 'rb') as file:
 #     ht_dict = pickle.load(file)
+
+tokenizer = TreebankWordTokenizer()
 
 def get_text_vocab_coverage(df):
     glove_embeddings = np.load('models/glove.840B.300d.pkl', allow_pickle=True)
@@ -158,6 +162,9 @@ def expand_vocab_coverage(df):
         clean_text = [word for word in clean_text if word not in stopwords.words('english') and word != "RT"]
         return ' '.join(clean_text)
 
+    def tokenize_clean_string(clean_tweet):
+        return ' '.join(tokenizer.tokenize(clean_tweet))
+
     df['cleaner_tweet'] = df['content'].apply(remove_urls)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(contraction_expander)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(char_entity_references)
@@ -178,14 +185,15 @@ def expand_vocab_coverage(df):
     # df['cleaner_tweet'] = df['cleaner_tweet'].apply(removeall_hashtags)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(removeall_punctuations)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(remove_stopwords)
+    df['cleaner_tweet'] = df['cleaner_tweet'].apply(tokenize_clean_string)
 
-    glove_oov, glove_vocab_coverage, glove_text_coverage = get_text_vocab_coverage(df)
+    # glove_oov, glove_vocab_coverage, glove_text_coverage = get_text_vocab_coverage(df)
 
-    print(f"glove vocab coverage without mentions: {glove_vocab_coverage}")
-    print(f"glove text coverage without mentions: {glove_text_coverage}")
-
-    with open("data/glove_oov_v5.pkl", "wb") as file:
-        pickle.dump(glove_oov, file)
+    # print(f"glove vocab coverage without mentions: {glove_vocab_coverage}")
+    # print(f"glove text coverage without mentions: {glove_text_coverage}")
+    #
+    # with open("data/glove_oov_v5.pkl", "wb") as file:
+    #     pickle.dump(glove_oov, file)
 
     return df
 
@@ -198,6 +206,6 @@ if __name__ == "__main__":
     print(f'length of total df: {len(df)}')
     df.drop(columns=["content_id", "matching_rules_ids", "received_at"], inplace=True)
     df = expand_vocab_coverage(df)
-    df.to_csv(f"data/tavatirTweetsProcessed_{len(df)}.csv", index=False)
+    df.to_csv(f"data/tavatirTweetsProcessed_v8.csv", index=False)
     end = time.time()
     print(f'Time to preprocess: {str(end-start)} seconds\n')
