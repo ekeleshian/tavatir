@@ -9,7 +9,7 @@ class TweetDb:
     def __init__(self, db_file="tavatirTweets_v2.db", should_create_tables=False):
         def create_tables():
             sql1 = """
-            CREATE TABLE IF NOT EXISTS tweet ( 
+            CREATE TABLE tweet ( 
                 id INTEGER PRIMARY KEY,
                 matching_rules_ids text,
                 content text,
