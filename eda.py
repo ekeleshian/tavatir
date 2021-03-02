@@ -74,16 +74,16 @@ def generate_results(clean_df, tweet_series, cos_sim_matrix, top_n_recs):
         tweet_id = clean_df.iloc[i].id
         recs, scores = get_topn_tweet_recs(tweet_series, tweet_id, cos_sim_matrix, top_n_recs)
         recs, scores = list(recs), list(scores)
-        recs, scores = list(unique_everseen(recs)), list(unique_everseen(scores))
+#         recs, scores = list(unique_everseen(recs)), list(unique_everseen(scores))
         clean_df.at[i, "top_n_tweets"] = recs
         clean_df.at[i, "top_n_scores"] = scores
     return clean_df
 
 
 def main():
-    clean_df = pd.read_csv('data/clean_tweets_v5.csv')
+    clean_df = pd.read_csv('data/tavatirTweetsProcessed_v4.csv')
     tfidf_fit, tfidf_matrix, vocab = string_to_vector(clean_df)
-    cosine_sim_matrix = cosine_similarity_n_space(tfidf_matrix)
+    cosine_sim_matrix = cosine_similarity_n_space(tfidf_matrix, tfidf_matrix)
     clean_df["top_n_tweets"] = ""
 
     clean_df['top_n_scores'] = ""
@@ -94,7 +94,7 @@ def main():
 
     clean_df = generate_results(clean_df, twitter_series, cosine_sim_matrix, top_n+1)
 
-    clean_df.to_csv("data/clean_tweets_v6.csv", index=False)
+    clean_df.to_csv("data/tavatirTweetsPCA_v4.csv", index=False)
 
 
 if __name__ == '__main__':

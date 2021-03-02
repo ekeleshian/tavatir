@@ -154,7 +154,7 @@ def expand_vocab_coverage(df):
 
             ht_dict[ht] = clean_ht
         print("saving as pkl file...\n")
-        with open('data/ht_dict_v5.pkl', 'wb') as file:
+        with open('data/ht_dict_v4.pkl', 'wb') as file:
             pickle.dump(ht_dict, file)
 
     def remove_stopwords(text):
@@ -176,7 +176,7 @@ def expand_vocab_coverage(df):
     # df['cleaner_tweet'] = df['cleaner_tweet'].apply(substitute_hashtags)
     build_hashtag_dict(df)
 
-    with open('data/ht_dict_v5.pkl', 'rb') as file:
+    with open('data/ht_dict_v4.pkl', 'rb') as file:
         ht_dict = pickle.load(file)
 
     df = df.apply(substitute_hashtags_v2, axis=1)
@@ -187,13 +187,13 @@ def expand_vocab_coverage(df):
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(remove_stopwords)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(tokenize_clean_string)
 
-    # glove_oov, glove_vocab_coverage, glove_text_coverage = get_text_vocab_coverage(df)
+    glove_oov, glove_vocab_coverage, glove_text_coverage = get_text_vocab_coverage(df)
 
     # print(f"glove vocab coverage without mentions: {glove_vocab_coverage}")
     # print(f"glove text coverage without mentions: {glove_text_coverage}")
     #
-    # with open("data/glove_oov_v5.pkl", "wb") as file:
-    #     pickle.dump(glove_oov, file)
+    with open("data/glove_oov_v4.pkl", "wb") as file:
+        pickle.dump(glove_oov, file)
 
     return df
 
@@ -201,11 +201,11 @@ def expand_vocab_coverage(df):
 if __name__ == "__main__":
     start = time.time()
     df = pd.DataFrame()
-    for i in range(2, 5):
+    for i in range(4, 5):
         df = df.append(pd.read_csv(f"data/tavatirTweetsRaw_v{i}.csv"))
     print(f'length of total df: {len(df)}')
-    df.drop(columns=["content_id", "matching_rules_ids", "received_at"], inplace=True)
+    df.drop(columns=["content_id", "matching_rules_ids"], inplace=True)
     df = expand_vocab_coverage(df)
-    df.to_csv(f"data/tavatirTweetsProcessed_v8.csv", index=False)
+    df.to_csv(f"data/tavatirTweetsProcessed_v4.csv", index=False)
     end = time.time()
     print(f'Time to preprocess: {str(end-start)} seconds\n')
