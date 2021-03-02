@@ -85,12 +85,14 @@ def get_stream(headers, set, bearer_token, tweetDb):
                     print(object_data)
                     tweetDb.insert(object_data)
                     duration = round(time.time()) - start_time
-                    if duration > 2*60*60: #restarts 
+                    if duration > 2*60*60: #generates a new connection every 2 hours to avoid closed connections
                         response.close()
                         print('Closing response....\n')
                         time.sleep(60)
                         now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
                         print(f'Sleeping done. Calling again at {now}.\n')
+                        tweetDb.conn.commit()
+                        tweetDb.conn.close()
                         main() 
 
         except KeyboardInterrupt:
