@@ -159,7 +159,7 @@ def expand_vocab_coverage(df):
 
     def remove_stopwords(text):
         clean_text = text.split(" ")
-        clean_text = [word for word in clean_text if word not in stopwords.words('english') and word != "RT"]
+        clean_text = [word.lower() for word in clean_text if word.lower() not in stopwords.words('english') and word != "RT"]
         return ' '.join(clean_text)
 
     def tokenize_clean_string(clean_tweet):
@@ -171,18 +171,19 @@ def expand_vocab_coverage(df):
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(replace_emojis)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(removeall_mentions)
     df['hashtags'] = df['cleaner_tweet'].apply(findall_hashtags)
-    print("created hashtags column and now substitute hashtags\n")
-    start = time.time()
+    df['is_retweet'] = df['content'].apply(lambda x: "RT" in x[:5])
+#     print("created hashtags column and now substitute hashtags\n")
+#     start = time.time()
     # df['cleaner_tweet'] = df['cleaner_tweet'].apply(substitute_hashtags)
-    build_hashtag_dict(df)
+#     build_hashtag_dict(df)
 
-    with open('data/ht_dict_v4.pkl', 'rb') as file:
-        ht_dict = pickle.load(file)
+#     with open('data/ht_dict_v4.pkl', 'rb') as file:
+#         ht_dict = pickle.load(file)
 
-    df = df.apply(substitute_hashtags_v2, axis=1)
-    end = time.time()
-    print(f"finished substituting: {str(end-start)} seconds\n")
-    # df['cleaner_tweet'] = df['cleaner_tweet'].apply(removeall_hashtags)
+#     df = df.apply(substitute_hashtags_v2, axis=1)
+#     end = time.time()
+#     print(f"finished substituting: {str(end-start)} seconds\n")
+    df['cleaner_tweet'] = df['cleaner_tweet'].apply(removeall_hashtags)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(removeall_punctuations)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(remove_stopwords)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(tokenize_clean_string)
@@ -201,11 +202,11 @@ def expand_vocab_coverage(df):
 if __name__ == "__main__":
     start = time.time()
     df = pd.DataFrame()
-    for i in range(4, 5):
+    for i in range(1, 5):
         df = df.append(pd.read_csv(f"data/tavatirTweetsRaw_v{i}.csv"))
     print(f'length of total df: {len(df)}')
     df.drop(columns=["content_id", "matching_rules_ids"], inplace=True)
-    df = expand_vocab_coverage(df)
+    df = expand_vocab_coverage(df)    
     df.to_csv(f"data/tavatirTweetsProcessed_v4.csv", index=False)
     end = time.time()
     print(f'Time to preprocess: {str(end-start)} seconds\n')

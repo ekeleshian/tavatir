@@ -19,7 +19,7 @@ word_dictionary.extend(["For", "War", "Crimes", "armenian", "stop", "terrorism",
 						"city", "Khojaly", "Attacking", "Kills", "killer", "Lies", "Vandalism", "CRIMES", "WAR", "karabakh", "Aliyev", "Artsakh",
 						"Nagorno", 'aggressor', "occupiers", "open", "eyes", "world", "Gandja", "France", "Shame", "On", "You", "Today",
 						"Human", "Rights", "Fascism", "Is", "let", "children", "die", 'not', 'is', 'france', "Terrorisim",
-						"United", "Nations", 'UNICEF', 'unicef', "Nikol", "Attacks", "Civilians", "for"])
+						"United", "Nations", 'UNICEF', 'unicef', "Nikol", "Attacks", "Civilians", "for", "Genocide", "Justice", "For", "Never", "Forget"])
 
 # for alphabet in "bcdefghjklmnopqrstuvwxyz" + "bcdefghjklmnopqrstuvwxyz".upper():
 # 	word_dictionary.remove(alphabet)
