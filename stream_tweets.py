@@ -78,23 +78,26 @@ def get_stream(headers, set, bearer_token, tweetDb):
                     )
                 )
 
-            for response_line in response.iter_lines():
-                if response_line:
-                    json_response = json.loads(response_line)
-                    object_data = json.dumps(json_response, indent=4, sort_keys=True)
-                    print(object_data)
-                    tweetDb.insert(object_data)
-                    duration = round(time.time()) - start_time
-                    if duration > 2*60*60: #generates a new connection every 2 hours to avoid closed connections
-                        response.close()
-                        print('Closing response....\n')
-                        time.sleep(60)
-                        now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-                        print(f'Sleeping done. Calling again at {now}.\n')
-                        tweetDb.conn.commit()
-                        tweetDb.conn.close()
-                        main() 
+            try:
+                for response_line in response.iter_lines():
+                    if response_line:
+                        json_response = json.loads(response_line)
+                        object_data = json.dumps(json_response, indent=4, sort_keys=True)
+                        print(object_data)
+                        tweetDb.insert(object_data)
+                        duration = round(time.time()) - start_time
+                        if duration > 2*60*60: #generates a new connection every 2 hours to avoid closed connections
+                            response.close()
+                            print('Closing response....\n')
+                            time.sleep(60)
+                            now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+                            print(f"Sleeping done. Calling again at {now}...")
+                            tweetDb.conn.commit()
+                            tweetDb.conn.close()
+                            main()
 
+            except requests.exceptions.ChunkedEncodingError:
+                pass
         except KeyboardInterrupt:
             tweetDb.conn.commit()
             tweetDb.conn.close()
