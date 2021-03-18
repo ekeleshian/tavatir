@@ -5,6 +5,24 @@ import json
 import tweet_db
 import time
 from datetime import datetime
+from collections import defaultdict
+from preprocess_tweet import findall_hashtags
+
+
+OG_HTS = {"#StopArmenianAggression",
+          "#ArmenianMilitaryCoup",
+          "#ArmenianGovernmentTrolls",
+          "#StopArmenianTerrorism",
+          "#babykillerarmenia",
+          "#WakeUpArmenia",
+          "#ArmeniaKillsChildren",
+          "#StopArmenianTerror",
+          "#KarabakhisAzerbaijan",
+          "#Azerbaijanphobia",
+          "#DontBelieveArmenia",
+          "#StopArmenianLies"}
+
+NEW_HASHTAGS = defaultdict()
 
 
 def create_headers(bearer_token):
@@ -12,7 +30,7 @@ def create_headers(bearer_token):
     return headers
 
 
-def get_rules(headers, bearer_token):
+def get_rules(headers):
     response = requests.get(
         "https://api.twitter.com/2/tweets/search/stream/rules", headers=headers
     )
@@ -24,7 +42,7 @@ def get_rules(headers, bearer_token):
     return response.json()
 
 
-def delete_all_rules(headers, bearer_token, rules):
+def delete_all_rules(headers, rules):
     if rules is None or "data" not in rules:
         return None
 
@@ -44,12 +62,16 @@ def delete_all_rules(headers, bearer_token, rules):
     print(json.dumps(response.json()))
 
 
-def set_rules(headers, delete, bearer_token):
+def generate_stream_rules():
+    return " OR ".join(OG_HTS)
+
+
+def set_rules(headers):
     # You can adjust the rules if needed
-    sample_rules = [
-        {"value": "(#StopArmenianAggression OR #ArmenianMilitaryCoup OR #ArmenianGovernmentTrolls OR #StopArmenianTerrorism OR #babykillerarmenia OR #WakeUpArmenia 1OR #ArmeniaKillsChildren OR #StopArmenianTerror OR #KarabakhisAzerbaijan OR #Azerbaijanphobia OR #DontBelieveArmenia OR #StopArmenianLies) lang:en"},
+    rules = [
+        {"value": f"({generate_stream_rules()}) lang:en"},
     ]
-    payload = {"add": sample_rules}
+    payload = {"add": rules}
     response = requests.post(
         "https://api.twitter.com/2/tweets/search/stream/rules",
         headers=headers,
@@ -62,7 +84,31 @@ def set_rules(headers, delete, bearer_token):
     print(json.dumps(response.json()))
 
 
-def get_stream(headers, set, bearer_token, tweetDb):
+def find_hashtags(object_data_str):
+    object_data = json.loads(object_data_str)
+    content = object_data.get('data', {}).get('text', '')
+    hashtags = findall_hashtags(content)
+    for ht in hashtags:
+        if ht not in OG_HTS:
+            NEW_HASHTAGS[ht] += 1
+            if NEW_HASHTAGS[ht] > 10:
+                OG_HTS.add(ht)
+                print(f'adding new hashtag to filters: {ht}')
+                del NEW_HASHTAGS[ht]
+
+
+def restart_connection(response, tweetDb):
+    print('Closing response....\n')
+    response.close()
+    tweetDb.conn.commit()
+    tweetDb.conn.close()
+    time.sleep(60)
+    now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+    print(f'Sleeping done. Calling main again at {now}.\n')
+    main()
+
+
+def get_stream(headers, set_, bearer_token, tweetDb):
     start_time = round(time.time())
     while True:
         try:
@@ -84,16 +130,10 @@ def get_stream(headers, set, bearer_token, tweetDb):
                     object_data = json.dumps(json_response, indent=4, sort_keys=True)
                     print(object_data)
                     tweetDb.insert(object_data)
+                    find_hashtags(object_data)
                     duration = round(time.time()) - start_time
                     if duration > 2*60*60: #generates a new connection every 2 hours to avoid closed connections
-                        response.close()
-                        print('Closing response....\n')
-                        time.sleep(60)
-                        now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-                        print(f'Sleeping done. Calling again at {now}.\n')
-                        tweetDb.conn.commit()
-                        tweetDb.conn.close()
-                        main() 
+                        restart_connection(response, tweetDb)
 
         except KeyboardInterrupt:
             tweetDb.conn.commit()
