@@ -123,18 +123,19 @@ def get_stream(headers, set_, bearer_token, tweetDb):
                         response.status_code, response.text
                     )
                 )
-
-            for response_line in response.iter_lines():
-                if response_line:
-                    json_response = json.loads(response_line)
-                    object_data = json.dumps(json_response, indent=4, sort_keys=True)
-                    print(object_data)
-                    tweetDb.insert(object_data)
-                    find_hashtags(object_data)
-                    duration = round(time.time()) - start_time
-                    if duration > 2*60*60: #generates a new connection every 2 hours to avoid closed connections
-                        restart_connection(response, tweetDb)
-
+            try:
+                for response_line in response.iter_lines():
+                    if response_line:
+                        json_response = json.loads(response_line)
+                        object_data = json.dumps(json_response, indent=4, sort_keys=True)
+                        print(object_data)
+                        tweetDb.insert(object_data)
+                        find_hashtags(object_data)
+                        duration = round(time.time()) - start_time
+                        if duration > 2*60*60: #generates a new connection every 2 hours to avoid closed connections
+                            restart_connection(response, tweetDb)
+            except requests.exceptions.ChunkedEncodingError:
+                pass
         except KeyboardInterrupt:
             tweetDb.conn.commit()
             tweetDb.conn.close()
