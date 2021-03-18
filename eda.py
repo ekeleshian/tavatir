@@ -104,29 +104,32 @@ def generate_results(clean_df, tweet_series, cos_sim_matrix, tsne_params):
     return clean_df
 
 
-def main(pca_params={'svd_solver': 'auto', 'whiten': False, 'tol': 0.0, 'iterated_power': 'auto'}, 
+def main(train=False, pca_params={'svd_solver': 'auto', 'whiten': False, 'tol': 0.0, 'iterated_power': 'auto'},
          tsne_params={'perplexity':30, 'learning_rate': 200, "early_exaggeration": 12.0, "n_iter":1000, "metric": "euclidean",
                       "n_iter_without_progress": 300, "min_grad_norm": 1e-07, "init": "random", "verbose": 0, "method":
                       "barnes_hut", "angle": 0.5, "n_jobs": -1, "square_distances": "legacy"}):
-    clean_df = pd.read_csv('data/tavatirTweetsProcessed_v4.csv')
-    clean_df = clean_df[~clean_df['cleaner_tweet'].isnull()]
-    print(f'remove null tweets {len(clean_df)}')
-    clean_df = clean_df.reset_index()
-    clean_df['id'] = clean_df.index + 1
-    
-    tfidf_matrix, vocab = string_to_vector(clean_df)
-    
-    cosine_sim_matrix = cosine_similarity_n_space(tfidf_matrix, tfidf_matrix)
-    
-    clean_df["top_n_tweets"] = ""
+    if train:
+        clean_df = pd.read_csv('data/tavatirTweetsProcessed_v4.csv')
+        clean_df = clean_df[~clean_df['cleaner_tweet'].isnull()]
+        print(f'remove null tweets {len(clean_df)}')
+        clean_df = clean_df.reset_index()
+        clean_df['id'] = clean_df.index + 1
 
-    clean_df['top_n_scores'] = ""
+        tfidf_matrix, vocab = string_to_vector(clean_df)
 
-    twitter_series = pd.Series(clean_df.id)
+        cosine_sim_matrix = cosine_similarity_n_space(tfidf_matrix, tfidf_matrix)
 
-    clean_df = generate_results(clean_df, twitter_series, cosine_sim_matrix, tsne_params)
-            
-    clean_df['Khojaly_mentioned'] = clean_df['content'].apply(lambda x: "khojaly" in x.lower())
+        clean_df["top_n_tweets"] = ""
+
+        clean_df['top_n_scores'] = ""
+
+        twitter_series = pd.Series(clean_df.id)
+
+        clean_df = generate_results(clean_df, twitter_series, cosine_sim_matrix, tsne_params)
+
+        clean_df['Khojaly_mentioned'] = clean_df['content'].apply(lambda x: "khojaly" in x.lower())
+    else:
+        clean_df = pd.read_csv("data/tavatirTweetsTSNE_v4.csv")
     
     fig = px.scatter(clean_df, 
                      x='tsne_x', 
@@ -143,10 +146,10 @@ def main(pca_params={'svd_solver': 'auto', 'whiten': False, 'tol': 0.0, 'iterate
         )
     )
     
-    fig.show()
+    # fig.show()
     
-    return clean_df
-
-
-if __name__ == '__main__':
-    main()
+    return fig, clean_df
+#
+#
+# if __name__ == '__main__':
+#     main()
