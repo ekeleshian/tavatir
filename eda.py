@@ -72,14 +72,8 @@ def get_topn_tweet_recs(tweet_series, tweet_id, cosine_sim):
     return recs, scores
 
 
-def generate_results(clean_df, tweet_series, cos_sim_matrix, pca_params, tsne_params):
-    def reduce_dimensions(df, matrix, kind='pca'):
-        if kind != 'tsne':
-            pca = PCA(**pca_params, n_components=2)
-            print('reducing dimensions with pca....')
-            reduced_matrix = pca.fit_transform(matrix)
-            df['pca_x'] = reduced_matrix[:, 0]
-            df['pca_y'] = reduced_matrix[:, 1]
+def generate_results(clean_df, tweet_series, cos_sim_matrix, tsne_params):
+    def reduce_dimensions(df, matrix, kind='tsne'):
         tsne = TSNE(**tsne_params, n_components=2)
         print('reducing dimensions with tsne....')
         reduced_matrix = tsne.fit_transform(matrix)
@@ -103,14 +97,12 @@ def generate_results(clean_df, tweet_series, cos_sim_matrix, pca_params, tsne_pa
         indices = [idx - 1 for idx in ids]
         vector[indices] = 1
         matrix.append(vector)
+        
+    clean_df = reduce_dimensions(clean_df, matrix)
     
-    clean_df = reduce_dimensions(clean_df, matrix, kind='pca')
     
     return clean_df
 
-
-
-    
 
 def main(pca_params={'svd_solver': 'auto', 'whiten': False, 'tol': 0.0, 'iterated_power': 'auto'}, 
          tsne_params={'perplexity':30, 'learning_rate': 200, "early_exaggeration": 12.0, "n_iter":1000, "metric": "euclidean",
@@ -132,27 +124,9 @@ def main(pca_params={'svd_solver': 'auto', 'whiten': False, 'tol': 0.0, 'iterate
 
     twitter_series = pd.Series(clean_df.id)
 
-    clean_df = generate_results(clean_df, twitter_series, cosine_sim_matrix, pca_params, tsne_params)
+    clean_df = generate_results(clean_df, twitter_series, cosine_sim_matrix, tsne_params)
             
-#     clean_df.to_csv("data/tavatirTweetsPCA_v4.csv", index=False)
     clean_df['Khojaly_mentioned'] = clean_df['content'].apply(lambda x: "khojaly" in x.lower())
-    
-    fig = px.scatter(clean_df, 
-                     x='pca_x', 
-                     y='pca_y',
-                     color="Khojaly_mentioned",
-                     hover_data=['cleaner_tweet'],
-                     title="clusters from PCA")
-    
-    fig.update_layout(
-        hoverlabel=dict(
-            bgcolor="white",
-            font_size=10,
-            namelength=-1
-        )
-    )
-    
-    fig.show()
     
     fig = px.scatter(clean_df, 
                      x='tsne_x', 
