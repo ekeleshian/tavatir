@@ -145,9 +145,9 @@ def get_stream(headers, set_, bearer_token, tweetDb):
 def main():
     bearer_token = os.environ.get("TWITTER_AUTH_BEARER_TOKEN")
     headers = create_headers(bearer_token)
-    rules = get_rules(headers, bearer_token)
-    delete = delete_all_rules(headers, bearer_token, rules)
-    set_ = set_rules(headers, delete, bearer_token)
+    rules = get_rules(headers)
+    delete_all_rules(headers, rules)
+    set_ = set_rules(headers)
     tweetDb = tweet_db.TweetDb(db_file=sys.argv[1], should_create_tables=True)
     get_stream(headers, set_, bearer_token, tweetDb)
 
