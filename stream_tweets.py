@@ -1,4 +1,5 @@
 import requests
+import threading
 import os
 import sys
 import json
@@ -6,6 +7,8 @@ import tweet_db
 import time
 from datetime import datetime
 from collections import defaultdict
+import telegram
+from telegram.ext import MessageHandler, Filters
 from preprocess_tweet import findall_hashtags
 
 
@@ -22,7 +25,11 @@ OG_HTS = {"#StopArmenianAggression",
           "#DontBelieveArmenia",
           "#StopArmenianLies"}
 
-NEW_HASHTAGS = defaultdict()
+NEW_HASHTAGS = defaultdict(int)
+
+CHAT_ID = -575829070
+
+TG_TOKEN = os.environ.get("TELEGRAM_ACCESS_TOKEN")
 
 
 def create_headers(bearer_token):
@@ -91,10 +98,13 @@ def find_hashtags(object_data_str):
     for ht in hashtags:
         if ht not in OG_HTS:
             NEW_HASHTAGS[ht] += 1
-            if NEW_HASHTAGS[ht] > 10:
-                OG_HTS.add(ht)
-                print(f'adding new hashtag to filters: {ht}')
-                del NEW_HASHTAGS[ht]
+            if NEW_HASHTAGS[ht] > 1:
+                send_hashtag(ht)
+
+                # OG_HTS.add(ht) #hashtag will be used during the next refresh
+                # print(f'adding new hashtag to filters: {ht}')
+                # del NEW_HASHTAGS[ht]
+
 
 
 def restart_connection(response, tweetDb):
@@ -105,7 +115,8 @@ def restart_connection(response, tweetDb):
     time.sleep(60)
     now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
     print(f'Sleeping done. Calling main again at {now}.\n')
-    main()
+    start_streaming_tweets()
+
 
 
 def get_stream(headers, set_, bearer_token, tweetDb):
@@ -142,7 +153,8 @@ def get_stream(headers, set_, bearer_token, tweetDb):
             quit()
 
 
-def main():
+def start_streaming_tweets():
+    print("started thread one")
     bearer_token = os.environ.get("TWITTER_AUTH_BEARER_TOKEN")
     headers = create_headers(bearer_token)
     rules = get_rules(headers)
@@ -152,7 +164,32 @@ def main():
     get_stream(headers, set_, bearer_token, tweetDb)
 
 
+def send_hashtag(ht):
+    bot = telegram.Bot(token=TG_TOKEN)
+    bot.send_message(chat_id=CHAT_ID, text=ht)
+
+
+def start_dispatch():
+    def add_hashtag(update, context):
+        context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
+
+    print('started main_thread')
+    updater = telegram.ext.Updater(token=TG_TOKEN, use_context=True)
+
+    dispatcher = updater.dispatcher
+
+    dispatcher.add_handler(MessageHandler(Filters.text, add_hashtag))
+
+    updater.start_polling()
+
+    updater.idle()
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         exit("You have to pass in db file path")
-    main()
+    thread_one = threading.Thread(target=start_streaming_tweets)
+    thread_one.start()
+    start_dispatch()
+    thread_one.join()
+
