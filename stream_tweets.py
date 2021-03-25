@@ -31,6 +31,8 @@ CHAT_ID = -575829070
 
 TG_TOKEN = os.environ.get("TELEGRAM_ACCESS_TOKEN")
 
+mutex = threading.Lock()
+
 
 def create_headers(bearer_token):
     headers = {"Authorization": "Bearer {}".format(bearer_token)}
@@ -98,13 +100,8 @@ def find_hashtags(object_data_str):
     for ht in hashtags:
         if ht not in OG_HTS:
             NEW_HASHTAGS[ht] += 1
-            if NEW_HASHTAGS[ht] > 1:
+            if NEW_HASHTAGS[ht] >= 10:
                 send_hashtag(ht)
-
-                # OG_HTS.add(ht) #hashtag will be used during the next refresh
-                # print(f'adding new hashtag to filters: {ht}')
-                # del NEW_HASHTAGS[ht]
-
 
 
 def restart_connection(response, tweetDb):
@@ -116,7 +113,6 @@ def restart_connection(response, tweetDb):
     now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
     print(f'Sleeping done. Calling main again at {now}.\n')
     start_streaming_tweets()
-
 
 
 def get_stream(headers, set_, bearer_token, tweetDb):
@@ -171,7 +167,13 @@ def send_hashtag(ht):
 
 def start_dispatch():
     def add_hashtag(update, context):
+        mutex.acquire()
+        try:
+            OG_HTS.add(update.message.text[1:])
+        finally:
+            mutex.release()
         context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
+
 
     print('started main_thread')
     updater = telegram.ext.Updater(token=TG_TOKEN, use_context=True)

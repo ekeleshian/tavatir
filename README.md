@@ -39,4 +39,5 @@ bot pings user of highly frequented hashtags and user pings bot back whether or 
 ## Offline Data Analysis
 *how to generate useful tweet visualizations from stored tweets*
 
-`$ python pipeline.py`
+1.  `$ python pipeline.py`  # clean up tweets
+2. `$ python app.py` # start up local dashboard
