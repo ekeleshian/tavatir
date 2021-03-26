@@ -3,6 +3,7 @@ import threading
 import os
 import sys
 import json
+import pickle
 import tweet_db
 import time
 from datetime import datetime
@@ -135,7 +136,9 @@ def get_stream(headers, set_, bearer_token, tweetDb):
                     if response_line:
                         json_response = json.loads(response_line)
                         object_data = json.dumps(json_response, indent=4, sort_keys=True)
-                        print(object_data)
+                        print(object_data, "\n")
+                        print(NEW_HASHTAGS, "\n")
+                        print(OG_HTS, "\n")
                         tweetDb.insert(object_data)
                         find_hashtags(object_data)
                         duration = round(time.time()) - start_time
@@ -146,7 +149,14 @@ def get_stream(headers, set_, bearer_token, tweetDb):
         except KeyboardInterrupt:
             tweetDb.conn.commit()
             tweetDb.conn.close()
+            with open("new_hashtag_dict.pkl", 'wb') as file:
+                pickle.dump(NEW_HASHTAGS, file)
+            with open("og_hashtags_set.pkl", 'wb') as file:
+                pickle.dump(OG_HTS, file)
             quit()
+        except Exception as e:
+            print(e)
+
 
 
 def start_streaming_tweets():
@@ -174,8 +184,8 @@ def start_dispatch():
             mutex.release()
         context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
 
-
     print('started main_thread')
+
     updater = telegram.ext.Updater(token=TG_TOKEN, use_context=True)
 
     dispatcher = updater.dispatcher
