@@ -23,6 +23,7 @@ with open('contraction_dict.pkl', 'rb') as file:
 
 tokenizer = TreebankWordTokenizer()
 
+
 def get_text_vocab_coverage(df):
     glove_embeddings = np.load('models/glove.840B.300d.pkl', allow_pickle=True)
 
@@ -61,7 +62,8 @@ def get_text_vocab_coverage(df):
 
         return sorted_oov, vocab_coverage, text_coverage
 
-    glove_oov, glove_vocab_coverage, glove_text_coverage = check_embeddings_coverage(df['cleaner_tweet'], glove_embeddings)
+    glove_oov, glove_vocab_coverage, glove_text_coverage = check_embeddings_coverage(
+        df['cleaner_tweet'], glove_embeddings)
 
     return glove_oov, glove_vocab_coverage, glove_text_coverage
 
@@ -76,13 +78,16 @@ def contraction_expander(text):
 
     return contractions_re.sub(replace, text)
 
+
 def remove_urls(text):
     return re.sub("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", "", text)
+
 
 def char_entity_references(text):
     text = re.sub(r"&gt;", ">", text)
     text = re.sub(r"&lt;", "<", text)
     return re.sub(r"&amp;", "&", text)
+
 
 def removeall_punctuations(text):
     text = re.sub(chr(8230), "...", text)
@@ -96,6 +101,7 @@ def removeall_punctuations(text):
 
     return text
 
+
 def replace_emojis(text):
     skin_tones = ["Light Skin Tone", "Medium-Light Skin Tone", "Medium Skin Tone", "Medium-Dark Skin Tone",
                   'Dark Skin Tone']
@@ -105,14 +111,18 @@ def replace_emojis(text):
         text = re.sub(sk, "", text)
     return text
 
+
 def removeall_mentions(text):
     return re.sub(r"(^@\w+)|(\s+@\w+)", "", text)
+
 
 def removeall_hashtags(text):
     return re.sub(r"\W(\#[a-zA-Z]+[0-9]*\b)(?!;)", "", text)
 
+
 def findall_hashtags(text):
     return re.findall(r"\W(\#[a-zA-Z]+[0-9]*\b)(?!;)", text)
+
 
 def substitute_hashtags(text):
     hashtags = re.findall(r"\W(\#[a-zA-Z]+[0-9]*\b)(?!;)", text)
@@ -127,6 +137,7 @@ def substitute_hashtags(text):
         text = re.sub(ht, clean_ht, text)
     return text
 
+
 def substitute_hashtags_v2(row):
     hashtags = row.hashtags
     for ht in hashtags:
@@ -135,6 +146,7 @@ def substitute_hashtags_v2(row):
         except KeyError as e:
             continue
     return row
+
 
 def build_hashtag_dict(df):
     all_hts = []
@@ -160,13 +172,17 @@ def build_hashtag_dict(df):
     with open('data/ht_dict_v4.pkl', 'wb') as file:
         pickle.dump(ht_dict, file)
 
+
 def remove_stopwords(text):
     clean_text = text.split(" ")
-    clean_text = [word.lower() for word in clean_text if word.lower() not in stopwords.words('english') and word != "RT"]
+    clean_text = [word.lower() for word in clean_text if word.lower()
+                  not in stopwords.words('english') and word != "RT"]
     return ' '.join(clean_text)
+
 
 def tokenize_clean_string(clean_tweet):
     return ' '.join(tokenizer.tokenize(clean_tweet))
+
 
 def expand_vocab_coverage(df):
     df['cleaner_tweet'] = df['content'].apply(remove_urls)
@@ -192,7 +208,8 @@ def expand_vocab_coverage(df):
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(remove_stopwords)
     df['cleaner_tweet'] = df['cleaner_tweet'].apply(tokenize_clean_string)
 
-    glove_oov, glove_vocab_coverage, glove_text_coverage = get_text_vocab_coverage(df)
+    glove_oov, glove_vocab_coverage, glove_text_coverage = get_text_vocab_coverage(
+        df)
 
     # print(f"glove vocab coverage without mentions: {glove_vocab_coverage}")
     # print(f"glove text coverage without mentions: {glove_text_coverage}")
@@ -201,6 +218,7 @@ def expand_vocab_coverage(df):
         pickle.dump(glove_oov, file)
 
     return df
+
 
 def main(n):
     start = time.time()

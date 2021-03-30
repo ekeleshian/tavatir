@@ -27,14 +27,14 @@ def cosine_similarity_n_space(m1, m2, batch_size=100):
         if end <= start:
             break
         rows = m1[start: end]
-        sim = cosine_similarity(rows, m2) # rows is O(1) size
+        sim = cosine_similarity(rows, m2)  # rows is O(1) size
         ret[start: end] = sim
     return ret
 
 
 def string_to_vector(df):
     #v1: ngram_range=(1,3)
-    tfidf_vectorizer = TfidfVectorizer(ngram_range=(1,1), analyzer='word')
+    tfidf_vectorizer = TfidfVectorizer(ngram_range=(1, 1), analyzer='word')
     tweets = list(df['cleaner_tweet'])
     matrix = tfidf_vectorizer.fit_transform(tweets)
     sparse_matrix = sparse.csr_matrix(matrix)
@@ -78,34 +78,34 @@ def generate_results(clean_df, tweet_series, cos_sim_matrix, tsne_params):
         print('reducing dimensions with tsne....')
         reduced_matrix = tsne.fit_transform(matrix)
         df['tsne_x'] = reduced_matrix[:, 0]
-        df['tsne_y'] = reduced_matrix[:, 1]        
+        df['tsne_y'] = reduced_matrix[:, 1]
 
         return df
-    
+
     for i in range(len(clean_df)):
         tweet_id = clean_df.iloc[i].id
-        recs, scores = get_topn_tweet_recs(tweet_series, tweet_id, cos_sim_matrix)
+        recs, scores = get_topn_tweet_recs(
+            tweet_series, tweet_id, cos_sim_matrix)
         recs, scores = list(recs), list(scores)
         clean_df.at[i, "top_n_tweets"] = recs
         clean_df.at[i, "top_n_scores"] = scores
-        
+
     matrix = []
-    
+
     for idx, row in clean_df.iterrows():
         vector = np.zeros(len(clean_df))
         ids = row.top_n_tweets
         indices = [idx - 1 for idx in ids]
         vector[indices] = 1
         matrix.append(vector)
-        
+
     clean_df = reduce_dimensions(clean_df, matrix)
-    
-    
+
     return clean_df
 
 
 def main(train=False, pca_params={'svd_solver': 'auto', 'whiten': False, 'tol': 0.0, 'iterated_power': 'auto'},
-         tsne_params={'perplexity':30, 'learning_rate': 200, "early_exaggeration": 12.0, "n_iter":1000, "metric": "euclidean",
+         tsne_params={'perplexity': 30, 'learning_rate': 200, "early_exaggeration": 12.0, "n_iter": 1000, "metric": "euclidean",
                       "n_iter_without_progress": 300, "min_grad_norm": 1e-07, "init": "random", "verbose": 0, "method":
                       "barnes_hut", "angle": 0.5, "n_jobs": -1, "square_distances": "legacy"}):
     if train:
@@ -117,7 +117,8 @@ def main(train=False, pca_params={'svd_solver': 'auto', 'whiten': False, 'tol': 
 
         tfidf_matrix, vocab = string_to_vector(clean_df)
 
-        cosine_sim_matrix = cosine_similarity_n_space(tfidf_matrix, tfidf_matrix)
+        cosine_sim_matrix = cosine_similarity_n_space(
+            tfidf_matrix, tfidf_matrix)
 
         clean_df["top_n_tweets"] = ""
 
@@ -125,19 +126,21 @@ def main(train=False, pca_params={'svd_solver': 'auto', 'whiten': False, 'tol': 
 
         twitter_series = pd.Series(clean_df.id)
 
-        clean_df = generate_results(clean_df, twitter_series, cosine_sim_matrix, tsne_params)
+        clean_df = generate_results(
+            clean_df, twitter_series, cosine_sim_matrix, tsne_params)
 
-        clean_df['Khojaly_mentioned'] = clean_df['content'].apply(lambda x: "khojaly" in x.lower())
+        clean_df['Khojaly_mentioned'] = clean_df['content'].apply(
+            lambda x: "khojaly" in x.lower())
     else:
         clean_df = pd.read_csv("data/tavatirTweetsTSNE_v4.csv")
-    
-    fig = px.scatter(clean_df, 
-                     x='tsne_x', 
+
+    fig = px.scatter(clean_df,
+                     x='tsne_x',
                      y='tsne_y',
                      color="Khojaly_mentioned",
-                     hover_data=['cleaner_tweet'],
+                     hover_data=['cleaner_tweet', 'username', 'content'],
                      title="clusters from TSNE")
-    
+
     fig.update_layout(
         hoverlabel=dict(
             bgcolor="white",
@@ -145,9 +148,9 @@ def main(train=False, pca_params={'svd_solver': 'auto', 'whiten': False, 'tol': 
             namelength=-1
         )
     )
-    
+
     # fig.show()
-    
+
     return fig, clean_df
 #
 #

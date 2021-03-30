@@ -18,8 +18,3 @@ if __name__ == "__main__":
     print('\nfinished preprocessing tweets....')
     df = eda.main()
     df.to_csv('data/tavatirTweetsTSNE_v4.csv')
-
-
-
-
-

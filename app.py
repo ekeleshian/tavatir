@@ -28,7 +28,6 @@ def get_nth_date(n=1):
     return f"2021/{month}/{day} 00:00:00"
 
 
-
 def hashtag_figs(df):
     def all_hashtags(df, title='All hashtags'):
         hashtags = defaultdict(int)
@@ -37,7 +36,8 @@ def hashtag_figs(df):
             for ht in hts:
                 hashtags[ht] += 1
 
-        ht_df = pd.DataFrame({"hashtag": list(hashtags.keys()), "count": list(hashtags.values())})
+        ht_df = pd.DataFrame(
+            {"hashtag": list(hashtags.keys()), "count": list(hashtags.values())})
         return px.bar(ht_df, x='hashtag', y='count', title=title)
 
     def todays_hashtags(df):
@@ -50,10 +50,12 @@ def hashtag_figs(df):
 
     return all_hashtags(df), todays_hashtags(df), weeks_hashtags(df)
 
+
 def username_figs(df):
     def all_usernames(df, title="All usernames"):
         usernames = df['username'].value_counts()
-        u_df = pd.DataFrame({"username": list(usernames.index), "count": list(usernames.values)})
+        u_df = pd.DataFrame(
+            {"username": list(usernames.index), "count": list(usernames.values)})
         return px.bar(u_df, x='username', y='count', title=title)
 
     def todays_users(df):
@@ -71,8 +73,6 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-# assume you have a "long-form" data frame
-# see https://plotly.com/python/px-arguments/ for more options
 fig, df = eda.main()
 fig1, fig2, fig3 = hashtag_figs(df)
 fig4, fig5, fig6 = username_figs(df)

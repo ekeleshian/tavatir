@@ -5,6 +5,7 @@ import sqlite3
 from sqlite3 import Error
 from datetime import datetime
 
+
 class TweetDb:
     def __init__(self, db_file="tavatirTweets_v2.db", should_create_tables=False):
         def create_tables():
@@ -76,7 +77,8 @@ class TweetDb:
             time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
             sql = "INSERT INTO tweet (content, content_id, matching_rules_ids, received_at, user_id, username, place_name, place_id, possibly_sensitive, urls, referenced_tweets) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
-            self.cursor.execute(sql, (content, content_id, matching_rules_ids_str, time, user_id, username, place_name, place_id, possibly_sensitive, urls_str, referenced_tweets_str))
+            self.cursor.execute(sql, (content, content_id, matching_rules_ids_str, time, user_id,
+                                username, place_name, place_id, possibly_sensitive, urls_str, referenced_tweets_str))
 
             self.conn.commit()
 
@@ -95,8 +97,8 @@ class TweetDb:
             csv_out.writerow(['id', 'matching_rules_ids', 'content', 'content_id', 'received_at', "user_id", "username",
                               "possibly_sensitive", "place_name", "place_id", "urls", 'referenced_tweets'])
             for row in rows:
-                new_row = tuple([str(v) if idx == 0 else v for idx, v in enumerate(row)])
+                new_row = tuple(
+                    [str(v) if idx == 0 else v for idx, v in enumerate(row)])
                 csv_out.writerow(new_row)
-
 
         return f"Saved CSV to {path}"
